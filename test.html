@@ -19,7 +19,7 @@
 </style>
 
 <body>
- <script src="//d3js.org/d3.v3.min.js"></script>
+ <script src="d3.js"></script>
  <script>
   window.onload = function() {
 
@@ -90,7 +90,6 @@
      if (error) throw error;
 
      var updated = d3.nest().key(function(d) {
-    
       return d.CLASS_NAME;
      }).sortKeys(d3.ascending).key(function(d) {
       return d.ORDER_NAME;
@@ -110,11 +109,25 @@
      rollup(function(leaves) {
       return leaves.length;
      }).entries(root);
+
+/*     function renameProps(obj) {
+       obj.name = obj.key;
+       if (obj.values === 1) {
+         return obj
+       } else {
+         obj.children = obj.values.map(renameProps(obj));
+         return obj;
+      }
+     }*/
+
+
      // console.log(updated);
      var all = new Object;
-     all.key = "CNIDARIA";
-     all.values = updated;
+     all.name = "CNIDARIA";
+     all.children = updated;
      root = all;
+
+
      console.log(root);
      // alert(JSON.stringify(root));
      //
@@ -147,7 +160,7 @@
        return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)";
       })
       .text(function(d) {
-       return d.key;
+       return d.name;
       });
     });
 
