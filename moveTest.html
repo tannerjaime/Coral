@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <style>
+        .node circle {
+            fill: #FCEFEA;
+            stroke: #B83C16;
+            stroke-width: 1.5px;
+        }
+        
+        .node {
+            /*stroke: #FEFCFC;*/
+            fill: #f7d5cf;
+            stroke-width: 0.1px;
+            font: 10px sans-serif;
+        }
+        
+        .link {
+            fill: none;
+            stroke: #E88B78;
+            stroke-width: 1.2px;
+        }
+        
+        @font-face {
+            font-family: 'JosefinSlab-Light';
+            src: url('JosefinSlab-Light.ttf');
+            src: url('JosefinSlab-Light.ttf?#iefix') format('embedded-opentype'), url('JosefinSlab-Light.ttf') format('ttf'), url('JosefinSlab-Light.ttf') format('truetype'), url('JosefinSlab-Light.ttf#JosefinSlab-Light') format('svg');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        .title {
+            /*left: 1000px;*/
+            text-align: CENTER;
+        }
+        
+        .body {
+            font-family: 'Open Sans', sans-serif;
+            color: #fff;
+            font-size: 18px;
+            text-align: CENTER;
+            word-wrap: normal;
+            font-weight: lighter;
+            width: 60%;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body bgcolor="#E15449">
+    <h1 style="font-weight: lighter; color: #fff;font-family:JosefinSlab-Light;font-size: 50px; fill: #fff;" class="title"> Our Disappearing Coral</h1>
+    <hr size="2" style="margin-left: 500px;margin-right: 500px;margin-top: 10px;stroke-width: 10px;">
+    <div class="body">
+        <p class="body"> A look at the known vulnerable and endangered species of coral, as recorded & categorized by the IUCN, and most recently updated in 2012.</p>
+    </div>
+    <script src="d3.js"></script>
+    <script>
+        window.onload = function() {
+            //find window width and height
+            var width = $(document).width();
+            var height = $(document).height();
+
+            //set svg measurements
+            var diameter = width * 0.8;
+            console.log(diameter);
+            var tree = d3.layout.tree()
+                .size([360, diameter / 2 - 120])
+                .separation(function(a, b) {
+                    return (a.parent == b.parent ? 1 : 2) / a.depth;
+                });
+
+            var diagonal = d3.svg.diagonal.radial()
+                .projection(function(d) {
+                    return [d.y, d.x / 180 * Math.PI];
+                });
+
+            //set container measurements
+            var svg = d3.select("body").append("svg")
+                .attr("width", diameter)
+                .attr("height", diameter)
+                //g elemenet is used to group SVG elements together 
+                .append("g")
+                .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
+
+            d3.csv("vulnerable.csv", function(error, root) {
+                if (error) throw error;
+
+                var updated = d3.nest().key(function(d) {
+                    return d.CLASS_NAME;
+                }).sortKeys(d3.ascending).key(function(d) {
+                    return d.ORDER_NAME;
+                }).sortKeys(d3.descending).
+                key(function(d) {
+                    return d.FAMILY_NAM;
+                }).sortKeys(d3.descending).
+                key(function(d) {
+                    return d.GENUS_NAME;
+                }).sortKeys(d3.descending).
+                key(function(d) {
+                        return d.SPECIES_NA;
+                    }).sortKeys(d3.descending).
+                    // key(function(d) {
+                    //  return d.CATEGORY;
+                    // }).sortKeys(d3.descending).
+                rollup(function(leaves) {
+                    return leaves.length;
+                }).entries(root);
+
+                /*     function renameProps(obj) {
+                       obj.name = obj.key;
+                       if (obj.values === 1) {
+                         return obj
+                       } else {
+                         obj.children = obj.values.map(renameProps(obj));
+                         return obj;
+                      }
+                     }*/
+
+
+                // console.log(updated);
+                var all = new Object;
+                all.name = "CNIDARIA";
+                all.children = updated;
+                root = all;
+
+
+                console.log(root);
+                // alert(JSON.stringify(root));
+                //
+                var nodes = tree.nodes(root),
+                    links = tree.links(nodes);
+                // console.log(nodes);
+
+                var link = svg.selectAll(".link")
+                    .data(links)
+                    .enter().append("path")
+                    .attr("class", "link")
+                    .attr("d", diagonal);
+                var node = svg.selectAll(".node")
+                    .data(nodes)
+                    .enter().append("g")
+                    .attr("class", "node")
+                    .attr("transform", function(d) {
+                        return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
+                    })
+
+                node.append("circle")
+                    .attr("r", 4);
+
+                node.append("text")
+                    .attr("dy", ".31em")
+                    .attr("text-anchor", function(d) {
+                        return d.x < 180 ? "start" : "end";
+                    })
+                    .attr("transform", function(d) {
+                        return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)";
+                    })
+                    .text(function(d) {
+                        return d.name;
+                    });
+            });
+
+            d3.select(self.frameElement).style("height", diameter - 150 + "px");
+
+
+            $("svg").css({
+                top: height * 0.3,
+                left: width / 9,
+                position: 'absolute'
+            });
+        };
+    </script>
